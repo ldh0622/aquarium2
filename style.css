@@ -1,12 +1,7 @@
 body {
   margin: 0;
   overflow: hidden;
-  background: #87ceeb;
-  font-family: sans-serif;
-}
-
-#aquarium {
-  display: block;
+  background: skyblue;
 }
 
 #controls {
@@ -16,12 +11,15 @@ body {
   z-index: 10;
 }
 
-#fishName {
-  padding: 10px;
-  font-size: 16px;
+#drawCanvas {
+  position: absolute;
+  top: 60px;
+  left: 20px;
+  background: white;
+  border: 2px solid black;
+  z-index: 10;
 }
 
-button {
-  padding: 10px;
-  font-size: 16px;
+#aquarium {
+  display: block;
 }

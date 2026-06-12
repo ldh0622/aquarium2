@@ -1,0 +1,27 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #87ceeb;
+  font-family: sans-serif;
+}
+
+#aquarium {
+  display: block;
+}
+
+#controls {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+}
+
+#fishName {
+  padding: 10px;
+  font-size: 16px;
+}
+
+button {
+  padding: 10px;
+  font-size: 16px;
+}

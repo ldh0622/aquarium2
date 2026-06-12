@@ -1,18 +1,24 @@
-const canvas = document.getElementById("aquarium");
-const ctx = canvas.getContext("2d");
+const aquarium = document.getElementById("aquarium");
+const aqCtx = aquarium.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+const drawCanvas = document.getElementById("drawCanvas");
+const drawCtx = drawCanvas.getContext("2d");
 
+aquarium.width = window.innerWidth;
+aquarium.height = window.innerHeight;
+
+let drawing = false;
 const fishes = [];
 
 class Fish {
-  constructor(name) {
-    this.name = name || "물고기";
-    this.x = Math.random() * canvas.width;
-    this.y = Math.random() * canvas.height;
-    this.size = 50;
-    this.speedX = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1);
+  constructor(img, name) {
+    this.img = img;
+    this.name = name;
+    this.x = Math.random() * aquarium.width;
+    this.y = Math.random() * aquarium.height;
+    this.width = 100;
+    this.height = 100;
+    this.speedX = Math.random() * 4 - 2;
     this.speedY = Math.random() * 2 - 1;
   }
 
@@ -20,82 +26,97 @@ class Fish {
     this.x += this.speedX;
     this.y += this.speedY;
 
-    if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-    if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+    if (this.x < 0 || this.x + this.width > aquarium.width) {
+      this.speedX *= -1;
+    }
+
+    if (this.y < 0 || this.y + this.height > aquarium.height) {
+      this.speedY *= -1;
+    }
   }
 
   draw() {
-    ctx.beginPath();
-    ctx.ellipse(this.x, this.y, this.size, this.size / 2, 0, 0, Math.PI * 2);
-    ctx.fillStyle = "orange";
-    ctx.fill();
+    aqCtx.drawImage(this.img, this.x, this.y, this.width, this.height);
 
-    ctx.beginPath();
-    ctx.moveTo(this.x - this.size, this.y);
-    ctx.lineTo(this.x - this.size - 20, this.y - 15);
-    ctx.lineTo(this.x - this.size - 20, this.y + 15);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.arc(this.x + 20, this.y - 5, 5, 0, Math.PI * 2);
-    ctx.fillStyle = "white";
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.arc(this.x + 20, this.y - 5, 2, 0, Math.PI * 2);
-    ctx.fillStyle = "black";
-    ctx.fill();
-
-    ctx.font = "20px Arial";
-    ctx.fillStyle = "black";
-    ctx.textAlign = "center";
-    ctx.fillText(this.name, this.x, this.y - this.size);
+    aqCtx.font = "20px Arial";
+    aqCtx.fillStyle = "black";
+    aqCtx.textAlign = "center";
+    aqCtx.fillText(this.name, this.x + this.width / 2, this.y - 10);
   }
 }
 
 function animate() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  aqCtx.clearRect(0, 0, aquarium.width, aquarium.height);
 
-  for (let fish of fishes) {
+  fishes.forEach(fish => {
     fish.update();
     fish.draw();
-  }
+  });
 
   requestAnimationFrame(animate);
 }
 
-document.getElementById("addFish").addEventListener("click", () => {
-  const name = document.getElementById("fishName").value;
-  fishes.push(new Fish(name));
-  document.getElementById("fishName").value = "";
+function startDraw(e) {
+  drawing = true;
+  drawCtx.beginPath();
+  drawCtx.moveTo(e.offsetX, e.offsetY);
+}
+
+function draw(e) {
+  if (!drawing) return;
+
+  drawCtx.lineWidth = 3;
+  drawCtx.lineCap = "round";
+  drawCtx.lineTo(e.offsetX, e.offsetY);
+  drawCtx.stroke();
+}
+
+function stopDraw() {
+  drawing = false;
+}
+
+drawCanvas.addEventListener("mousedown", startDraw);
+drawCanvas.addEventListener("mousemove", draw);
+drawCanvas.addEventListener("mouseup", stopDraw);
+
+drawCanvas.addEventListener("touchstart", (e) => {
+  drawing = true;
+  const rect = drawCanvas.getBoundingClientRect();
+  drawCtx.beginPath();
+  drawCtx.moveTo(
+    e.touches[0].clientX - rect.left,
+    e.touches[0].clientY - rect.top
+  );
 });
 
-canvas.addEventListener("click", (e) => {
-  const name = document.getElementById("fishName").value || "물고기";
-  const fish = new Fish(name);
+drawCanvas.addEventListener("touchmove", (e) => {
+  if (!drawing) return;
+  const rect = drawCanvas.getBoundingClientRect();
 
-  fish.x = e.clientX;
-  fish.y = e.clientY;
-
-  fishes.push(fish);
+  drawCtx.lineWidth = 3;
+  drawCtx.lineCap = "round";
+  drawCtx.lineTo(
+    e.touches[0].clientX - rect.left,
+    e.touches[0].clientY - rect.top
+  );
+  drawCtx.stroke();
 });
 
-canvas.addEventListener("touchstart", (e) => {
-  e.preventDefault();
+drawCanvas.addEventListener("touchend", stopDraw);
 
-  const name = document.getElementById("fishName").value || "물고기";
-  const fish = new Fish(name);
+document.getElementById("clearDrawing").addEventListener("click", () => {
+  drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+});
 
-  fish.x = e.touches[0].clientX;
-  fish.y = e.touches[0].clientY;
+document.getElementById("finishDrawing").addEventListener("click", () => {
+  const img = new Image();
+  img.src = drawCanvas.toDataURL("image/png");
 
-  fishes.push(fish);
+  img.onload = () => {
+    const name = document.getElementById("fishName").value || "물고기";
+    fishes.push(new Fish(img, name));
+    drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+  };
 });
 
 animate();
-
-window.addEventListener("resize", () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-});
